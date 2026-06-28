@@ -48,3 +48,26 @@ class SummaryView(APIView):
                 "savings_total": total_income - total_expenses,
             }
         )
+
+
+class InsightsView(APIView):
+    """GET /api/analytics/insights/ — intelligence : prédiction, abonnements, anomalies, conseils."""
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        from .insights import (
+            detect_subscriptions,
+            detect_unusual,
+            predict_month_end,
+            propose_savings,
+        )
+
+        return Response(
+            {
+                "prediction": predict_month_end(request.user),
+                "subscriptions": detect_subscriptions(request.user),
+                "unusual": detect_unusual(request.user),
+                "savings_tips": propose_savings(request.user),
+            }
+        )

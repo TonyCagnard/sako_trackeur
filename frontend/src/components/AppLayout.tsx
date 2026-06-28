@@ -50,6 +50,9 @@ export default function AppLayout() {
               <NavLink to="/banque" className={navClass}>
                 Banque
               </NavLink>
+              <NavLink to="/conseils" className={navClass}>
+                Conseils
+              </NavLink>
               <NavLink to="/profile" className={navClass}>
                 Profil
               </NavLink>
