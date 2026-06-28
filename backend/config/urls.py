@@ -1,7 +1,7 @@
 """Configuration d'URL racine de l'API Sako Trackeur."""
 from django.contrib import admin
 from django.http import JsonResponse
-from django.urls import path
+from django.urls import include, path
 
 
 def health(request):
@@ -12,4 +12,5 @@ def health(request):
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/health/", health, name="api-health"),
+    path("api/auth/", include("users.urls")),
 ]
