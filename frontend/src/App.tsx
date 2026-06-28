@@ -8,6 +8,7 @@ import Register from "./pages/Register"
 import Profile from "./pages/Profile"
 import Categories from "./pages/Categories"
 import Expenses from "./pages/Expenses"
+import Revenus from "./pages/Revenus"
 import Budgets from "./pages/Budgets"
 import Dashboard from "./pages/Dashboard"
 
@@ -44,6 +45,7 @@ export default function App() {
           >
             <Route path="/" element={<Dashboard />} />
             <Route path="/expenses" element={<Expenses />} />
+            <Route path="/revenus" element={<Revenus />} />
             <Route path="/categories" element={<Categories />} />
             <Route path="/budgets" element={<Budgets />} />
             <Route path="/profile" element={<Profile />} />

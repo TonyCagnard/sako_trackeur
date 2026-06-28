@@ -11,6 +11,8 @@ DEFAULT_CATEGORIES = [
     {"name": "Shopping", "kind": "expense", "color": "#f59e0b"},
     {"name": "Restaurants", "kind": "expense", "color": "#8b5cf6"},
     {"name": "Salaire", "kind": "income", "color": "#22c55e"},
+    {"name": "Primes", "kind": "income", "color": "#0ea5e9"},
+    {"name": "Remboursements", "kind": "income", "color": "#14b8a6"},
     {"name": "Autre", "kind": "expense", "color": "#64748b"},
 ]
 

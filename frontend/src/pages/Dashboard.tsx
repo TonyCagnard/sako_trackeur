@@ -10,6 +10,8 @@ type Summary = {
   total: number
   income_month: number
   balance: number
+  income_total: number
+  savings_total: number
 }
 
 const CURRENCY: Record<string, string> = {
@@ -94,6 +96,7 @@ export default function Dashboard() {
   ]
 
   const balance = Number(stats?.balance ?? 0)
+  const savingsTotal = Number(stats?.savings_total ?? 0)
 
   return (
     <div className="space-y-8">
@@ -132,7 +135,7 @@ export default function Dashboard() {
         ))}
       </section>
 
-      {/* Revenus & solde du mois */}
+      {/* Revenus & épargne */}
       {stats && (
         <section className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
           <div>
@@ -143,7 +146,7 @@ export default function Dashboard() {
           </div>
           <div className="hidden h-10 w-px bg-slate-200 sm:block" />
           <div>
-            <p className="text-sm text-slate-500">Solde du mois</p>
+            <p className="text-sm text-slate-500">Épargne du mois</p>
             <p
               className={`text-xl font-bold ${
                 balance >= 0 ? "text-emerald-600" : "text-rose-600"
@@ -153,11 +156,23 @@ export default function Dashboard() {
               {fmt(Math.abs(balance))}
             </p>
           </div>
+          <div className="hidden h-10 w-px bg-slate-200 sm:block" />
+          <div>
+            <p className="text-sm text-slate-500">Épargne totale</p>
+            <p
+              className={`text-xl font-bold ${
+                savingsTotal >= 0 ? "text-emerald-600" : "text-rose-600"
+              }`}
+            >
+              {savingsTotal >= 0 ? "+" : "−"}
+              {fmt(Math.abs(savingsTotal))}
+            </p>
+          </div>
           <Link
-            to="/expenses"
-            className="ml-auto rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-500"
+            to="/revenus"
+            className="ml-auto rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-500"
           >
-            Gérer mes dépenses →
+            + Revenu
           </Link>
         </section>
       )}

@@ -33,14 +33,18 @@ class SummaryView(APIView):
         month_income = _sum(
             incomes.filter(date__year=today.year, date__month=today.month)
         )
+        total_expenses = _sum(expenses)
+        total_income = _sum(incomes)
 
         return Response(
             {
                 "today": _sum(expenses.filter(date=today)),
                 "week": _sum(expenses.filter(date__gte=start_of_week)),
                 "month": month_expenses,
-                "total": _sum(expenses),
+                "total": total_expenses,
                 "income_month": month_income,
                 "balance": month_income - month_expenses,
+                "income_total": total_income,
+                "savings_total": total_income - total_expenses,
             }
         )
