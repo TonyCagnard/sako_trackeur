@@ -1,6 +1,9 @@
+from django.shortcuts import get_object_or_404
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+
+from expenses.models import Expense
 
 from .models import BankConnection
 from .services import sync_connection
@@ -73,3 +76,24 @@ class SyncView(APIView):
                 # on continue sur les autres connexions
                 continue
         return Response({"imported": total})
+
+
+class ConnectionDetailView(APIView):
+    """DELETE /api/banking/<id>/ — déconnecte une banque.
+
+    Supprime la connexion, les comptes, les transactions bancaires ET les
+    dépenses qui avaient été importées via cette connexion (nettoyage complet).
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, pk):
+        connection = get_object_or_404(BankConnection, pk=pk, user=request.user)
+        deleted_expenses = connection.transactions.count()
+        # 1) supprime les dépenses importées via cette connexion
+        Expense.objects.filter(bank_transaction__connection=connection).delete()
+        # 2) supprime la connexion (cascade : comptes + transactions bancaires)
+        connection.delete()
+        return Response(
+            {"detail": "Banque déconnectée.", "deleted_expenses": deleted_expenses}
+        )

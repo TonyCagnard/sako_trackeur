@@ -98,6 +98,26 @@ export default function Bank() {
     }
   }
 
+  const disconnect = async (c: BankConnection) => {
+    const confirmMsg =
+      c.imported_count > 0
+        ? `Déconnecter cette banque ? Cela supprimera aussi les ${c.imported_count} transaction(s) importée(s).`
+        : "Déconnecter cette banque ?"
+    if (!window.confirm(confirmMsg)) return
+    setBusy(true)
+    setError("")
+    setMsg("")
+    try {
+      const { data } = await api.delete(`/banking/${c.id}/`)
+      setMsg(data.detail || "Banque déconnectée.")
+      load()
+    } catch (err) {
+      setError(extractApiError((err as AxiosError).response?.data))
+    } finally {
+      setBusy(false)
+    }
+  }
+
   return (
     <div className="space-y-6">
       <div>
@@ -173,6 +193,14 @@ export default function Bank() {
                     {fmtDate(c.last_synced_at)}
                   </p>
                 </div>
+                <button
+                  type="button"
+                  onClick={() => disconnect(c)}
+                  disabled={busy}
+                  className="shrink-0 rounded-md px-3 py-1.5 text-sm font-medium text-rose-600 ring-1 ring-inset ring-rose-300 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  Déconnecter
+                </button>
               </div>
 
               <div className="space-y-2">
