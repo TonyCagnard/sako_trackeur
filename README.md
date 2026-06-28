@@ -29,12 +29,12 @@ sako_trackeur/
 ## ✅ Prérequis
 
 - **Python 3.12+**
-- **Node.js 20.19+** recommandé *(fonctionne avec 20.17 — voir la note Node ci-dessous)*
+- **Node.js 22 LTS ou 24 LTS** *(validé sur Node 24.18.0 LTS)* — requis par Vite 8 (moteur Rolldown)
 - (Optionnel, production) **PostgreSQL**
 
-> **Note Node** : le frontend est calé sur **Vite 6** (compatible Node 20.17+).
-> Pour passer à Vite 7/8 (moteur Rolldown, builds plus rapides), migrez vers
-> **Node 22 LTS** puis `npm install vite@latest -D` dans `frontend/`.
+> **Sécurité** : Node 20 est en fin de vie (EOL avril 2026) et **ne doit plus être utilisé**.
+> Le projet tourne sur **Node 24 LTS** (LTS actif, support jusqu'en 2028).
+> Le frontend utilise **Vite 8** + Tailwind CSS v4 + ESLint 9.
 
 ---
 
