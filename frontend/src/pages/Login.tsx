@@ -2,7 +2,8 @@ import { useState, type ChangeEvent, type FormEvent } from "react"
 import { Link, useLocation, useNavigate } from "react-router-dom"
 import type { AxiosError } from "axios"
 import { useAuth } from "../context/AuthContext"
-import { TextField } from "../components/ui"
+import AuthShell from "../components/AuthShell"
+import { Alert, Button, TextField } from "../components/ui"
 import { extractApiError } from "../lib/apiError"
 
 export default function Login() {
@@ -36,64 +37,41 @@ export default function Login() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4">
-      <div className="w-full max-w-md">
-        <div className="mb-6 flex flex-col items-center">
-          <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-600 text-xl font-bold text-white shadow-sm">
-            S
-          </div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-            Connexion
-          </h1>
-          <p className="text-sm text-slate-500">Accède à ton espace Sako Trackeur</p>
-        </div>
-
-        <form
-          onSubmit={onSubmit}
-          className="space-y-4 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
-        >
-          {error && (
-            <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
-              {error}
-            </div>
-          )}
-          <TextField
-            label="Nom d'utilisateur"
-            name="username"
-            value={form.username}
-            onChange={onChange}
-            autoComplete="username"
-            autoFocus
-            required
-          />
-          <TextField
-            label="Mot de passe"
-            name="password"
-            type="password"
-            value={form.password}
-            onChange={onChange}
-            autoComplete="current-password"
-            required
-          />
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {loading ? "Connexion…" : "Se connecter"}
-          </button>
-        </form>
-
-        <p className="mt-4 text-center text-sm text-slate-500">
+    <AuthShell
+      title="Connexion"
+      subtitle="Accède à ton espace Sako Trackeur"
+      onSubmit={onSubmit}
+      footer={
+        <>
           Pas encore de compte ?{" "}
-          <Link
-            to="/register"
-            className="font-medium text-indigo-600 hover:text-indigo-500"
-          >
+          <Link to="/register" className="font-medium text-accent hover:underline">
             Crée-en un
           </Link>
-        </p>
-      </div>
-    </div>
+        </>
+      }
+    >
+      {error && <Alert>{error}</Alert>}
+      <TextField
+        label="Nom d'utilisateur"
+        name="username"
+        value={form.username}
+        onChange={onChange}
+        autoComplete="username"
+        autoFocus
+        required
+      />
+      <TextField
+        label="Mot de passe"
+        name="password"
+        type="password"
+        value={form.password}
+        onChange={onChange}
+        autoComplete="current-password"
+        required
+      />
+      <Button type="submit" className="w-full" disabled={loading}>
+        {loading ? "Connexion…" : "Se connecter"}
+      </Button>
+    </AuthShell>
   )
 }

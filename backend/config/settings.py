@@ -54,7 +54,6 @@ INSTALLED_APPS = [
     "budgets",
     "analytics",
     "goals",
-    "banking",
 ]
 
 MIDDLEWARE = [
@@ -165,11 +164,3 @@ CORS_ALLOWED_ORIGINS = env.list(
     "CORS_ALLOWED_ORIGINS",
     default=["http://localhost:5173", "http://127.0.0.1:5173"],
 )
-
-# ---------------------------------------------------------------------------
-# Agrégateur bancaire (Bridge / GoCardless) — laisser vide pour le mode sandbox/mock
-# ---------------------------------------------------------------------------
-GOCARDLESS_SECRET_ID = env("GOCARDLESS_SECRET_ID", default="")
-GOCARDLESS_SECRET_KEY = env("GOCARDLESS_SECRET_KEY", default="")
-BRIDGE_CLIENT_ID = env("BRIDGE_CLIENT_ID", default="")
-BRIDGE_CLIENT_SECRET = env("BRIDGE_CLIENT_SECRET", default="")

@@ -10,6 +10,7 @@ from datetime import timedelta
 from decimal import Decimal
 
 from django.db.models import Avg, Sum
+from django.db.models.functions import TruncMonth
 from django.utils import timezone
 
 from expenses.models import Expense
@@ -208,3 +209,76 @@ def propose_savings(user):
     if not tips:
         tips.append("Ajoute plus de dépenses pour obtenir des conseils personnalisés.")
     return tips
+
+
+def net_worth_series(user, months=12):
+    """Série du patrimoine net cumulé (revenus − dépenses) sur les N derniers mois.
+
+    Renvoie une liste [{month: "YYYY-MM", value: float}] où `value` est le cumul
+    net à fin du mois (rempli même pour les mois sans mouvement, pour un
+    graphique régulier).
+    """
+    rows = (
+        Expense.objects.filter(user=user)
+        .annotate(m=TruncMonth("date"))
+        .values("m", "category__kind")
+        .annotate(total=Sum("amount"))
+        .order_by("m")
+    )
+    deltas = defaultdict(lambda: Decimal("0"))
+    for r in rows:
+        total = r["total"] or Decimal("0")
+        deltas[r["m"]] += total if r["category__kind"] == "income" else -total
+
+    # Cumul depuis le premier mouvement.
+    all_months = sorted(deltas)
+    cum = {}
+    running = Decimal("0")
+    for m in all_months:
+        running += deltas[m]
+        cum[m] = running
+
+    # N derniers mois calendaires : valeur = dernier cumul connu <= ce mois.
+    today = timezone.now().date()
+    series = []
+    cur = today.replace(day=1)
+    for _ in range(months):
+        val = Decimal("0")
+        for m in all_months:
+            if m <= cur:
+                val = cum[m]
+            else:
+                break
+        series.append({"month": cur.strftime("%Y-%m"), "value": float(round(val, 2))})
+        cur = (cur - timedelta(days=1)).replace(day=1)
+    series.reverse()
+    return series
+
+
+def expense_breakdown(user):
+    """Répartition des dépenses par catégorie pour le mois courant.
+
+    Renvoie {items: [{name, color, amount, percent}], total}.
+    """
+    today = timezone.now().date()
+    start, end = _month_bounds(today)
+    rows = (
+        Expense.objects.filter(
+            user=user, category__kind="expense", date__gte=start, date__lt=end
+        )
+        .values("category__name", "category__color")
+        .annotate(total=Sum("amount"))
+        .order_by("-total")
+    )
+    items = [
+        {
+            "name": r["category__name"],
+            "color": r["category__color"] or "#1ed7ae",
+            "amount": float(r["total"] or 0),
+        }
+        for r in rows
+    ]
+    total = sum(i["amount"] for i in items)
+    for i in items:
+        i["percent"] = round(i["amount"] / total * 100, 1) if total else 0
+    return {"items": items, "total": round(total, 2)}

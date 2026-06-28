@@ -1,8 +1,20 @@
 import { useEffect, useMemo, useState, type ChangeEvent, type FormEvent } from "react"
 import type { AxiosError } from "axios"
+import { Plus, Trash2 } from "lucide-react"
 import api from "../api/client"
 import { useAuth } from "../context/AuthContext"
-import { TextField } from "../components/ui"
+import {
+  Alert,
+  Button,
+  Card,
+  CardHeader,
+  EmptyState,
+  Field,
+  PageHeader,
+  Select,
+  Spinner,
+  TextField,
+} from "../components/ui"
 import { extractApiError } from "../lib/apiError"
 
 type Kind = "expense" | "income"
@@ -38,7 +50,6 @@ export default function Expenses() {
   const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(true)
 
-  // Filtres
   const [searchInput, setSearchInput] = useState("")
   const [debouncedSearch, setDebouncedSearch] = useState("")
   const [filters, setFilters] = useState({
@@ -48,7 +59,6 @@ export default function Expenses() {
   })
   const [reloadKey, setReloadKey] = useState(0)
 
-  // Formulaire (ajout / édition)
   const [form, setForm] = useState(EMPTY_FORM)
   const [editingId, setEditingId] = useState<number | null>(null)
   const [error, setError] = useState("")
@@ -57,7 +67,6 @@ export default function Expenses() {
   const expenseCats = categories.filter((c) => c.kind === "expense")
   const incomeCats = categories.filter((c) => c.kind === "income")
 
-  // Liste des 12 derniers mois pour le filtre
   const monthOptions = useMemo(() => {
     const opts: { value: string; label: string }[] = []
     const now = new Date()
@@ -71,7 +80,6 @@ export default function Expenses() {
     return opts
   }, [])
 
-  // Catégories (pour le select) — une fois
   useEffect(() => {
     api
       .get<{ results: Category[] }>("/categories/")
@@ -79,13 +87,11 @@ export default function Expenses() {
       .catch(() => {})
   }, [])
 
-  // Débounce de la recherche
   useEffect(() => {
     const t = setTimeout(() => setDebouncedSearch(searchInput), 300)
     return () => clearTimeout(t)
   }, [searchInput])
 
-  // Rechargement des dépenses selon les filtres
   useEffect(() => {
     const params: Record<string, string> = {}
     if (debouncedSearch) params.search = debouncedSearch
@@ -121,9 +127,8 @@ export default function Expenses() {
     setFilters({ category: "", month: "", ordering: "-date" })
   }
 
-  const onFormChange = (
-    e: ChangeEvent<HTMLInputElement | HTMLSelectElement>
-  ) => setForm((f) => ({ ...f, [e.target.name]: e.target.value }))
+  const onFormChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
+    setForm((f) => ({ ...f, [e.target.name]: e.target.value }))
 
   const resetForm = () => {
     setForm(EMPTY_FORM)
@@ -185,20 +190,15 @@ export default function Expenses() {
     }
   }
 
-  const selectClass =
-    "rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
-
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900">Dépenses</h1>
-        <p className="text-sm text-slate-500">
-          Recherche, filtre par catégorie et par mois, tri — et édition complète.
-        </p>
-      </div>
+      <PageHeader
+        title="Dépenses"
+        description="Recherche, filtre par catégorie et par mois, tri — et édition complète."
+      />
 
       {/* Barre de filtres */}
-      <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+      <Card className="p-4">
         <div className="flex flex-wrap items-end gap-3">
           <div className="min-w-[200px] flex-1">
             <TextField
@@ -209,14 +209,8 @@ export default function Expenses() {
               placeholder="Description…"
             />
           </div>
-          <label className="block">
-            <span className="mb-1 block text-sm font-medium text-slate-700">Catégorie</span>
-            <select
-              name="category"
-              value={filters.category}
-              onChange={onFilterChange}
-              className={selectClass}
-            >
+          <Field label="Catégorie">
+            <Select name="category" value={filters.category} onChange={onFilterChange}>
               <option value="">Toutes</option>
               <optgroup label="Dépenses">
                 {expenseCats.map((c) => (
@@ -232,51 +226,35 @@ export default function Expenses() {
                   </option>
                 ))}
               </optgroup>
-            </select>
-          </label>
-          <label className="block">
-            <span className="mb-1 block text-sm font-medium text-slate-700">Mois</span>
-            <select
-              name="month"
-              value={filters.month}
-              onChange={onFilterChange}
-              className={selectClass}
-            >
+            </Select>
+          </Field>
+          <Field label="Mois">
+            <Select name="month" value={filters.month} onChange={onFilterChange}>
               <option value="">Tous les mois</option>
               {monthOptions.map((m) => (
                 <option key={m.value} value={m.value}>
                   {m.label}
                 </option>
               ))}
-            </select>
-          </label>
-          <label className="block">
-            <span className="mb-1 block text-sm font-medium text-slate-700">Tri</span>
-            <select
-              name="ordering"
-              value={filters.ordering}
-              onChange={onFilterChange}
-              className={selectClass}
-            >
+            </Select>
+          </Field>
+          <Field label="Tri">
+            <Select name="ordering" value={filters.ordering} onChange={onFilterChange}>
               <option value="-date">Date (récent → ancien)</option>
               <option value="date">Date (ancien → récent)</option>
               <option value="-amount">Montant (élevé → bas)</option>
               <option value="amount">Montant (bas → élevé)</option>
-            </select>
-          </label>
-          <button
-            type="button"
-            onClick={clearFilters}
-            className="rounded-lg px-3 py-2 text-sm font-medium text-slate-500 ring-1 ring-inset ring-slate-300 hover:bg-slate-100"
-          >
+            </Select>
+          </Field>
+          <Button type="button" variant="subtle" onClick={clearFilters}>
             Réinitialiser
-          </button>
+          </Button>
         </div>
-      </section>
+      </Card>
 
       {/* Formulaire ajout / édition */}
-      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <h2 className="mb-4 text-lg font-semibold text-slate-900">
+      <Card className="p-5">
+        <h2 className="mb-4 text-sm font-semibold text-content">
           {editingId ? "Modifier la dépense" : "Ajouter une dépense"}
         </h2>
         <form onSubmit={submit} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -291,14 +269,12 @@ export default function Expenses() {
             placeholder="0,00"
             required
           />
-          <label className="block">
-            <span className="mb-1 block text-sm font-medium text-slate-700">Catégorie *</span>
-            <select
+          <Field label="Catégorie *">
+            <Select
               name="category"
               value={form.category}
               onChange={onFormChange}
               required
-              className={`${selectClass} w-full`}
             >
               <option value="">Choisir…</option>
               <optgroup label="Dépenses">
@@ -315,8 +291,8 @@ export default function Expenses() {
                   </option>
                 ))}
               </optgroup>
-            </select>
-          </label>
+            </Select>
+          </Field>
           <TextField
             label="Date *"
             name="date"
@@ -333,51 +309,38 @@ export default function Expenses() {
             placeholder="Optionnel"
           />
           <div className="flex items-end gap-2 sm:col-span-2 lg:col-span-4">
-            <button
-              type="submit"
-              className="rounded-lg bg-indigo-600 px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-500"
-            >
-              {editingId ? "Enregistrer" : "Ajouter"}
-            </button>
+            <Button type="submit">
+              <Plus size={16} /> {editingId ? "Enregistrer" : "Ajouter"}
+            </Button>
             {editingId && (
-              <button
-                type="button"
-                onClick={resetForm}
-                className="rounded-lg px-3 py-2 text-sm font-medium text-slate-500 hover:bg-slate-100"
-              >
+              <Button type="button" variant="ghost" onClick={resetForm}>
                 Annuler
-              </button>
+              </Button>
             )}
           </div>
         </form>
-        {error && (
-          <p className="mt-3 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
-            {error}
-          </p>
-        )}
-        {msg && !error && (
-          <p className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
-            {msg}
-          </p>
-        )}
-      </section>
+        {error && <Alert className="mt-4">{error}</Alert>}
+        {msg && !error && <Alert tone="success" className="mt-4">{msg}</Alert>}
+      </Card>
 
       {/* Liste */}
-      <section className="rounded-2xl border border-slate-200 bg-white shadow-sm">
-        <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
-          <h2 className="font-semibold text-slate-900">Historique</h2>
-          <span className="text-xs text-slate-400">
-            {expenses.length} résultat(s)
-          </span>
-        </div>
+      <Card>
+        <CardHeader title="Historique">
+          {expenses.length > 0 && (
+            <span className="text-xs text-faint">{expenses.length} résultat(s)</span>
+          )}
+        </CardHeader>
         {loading ? (
-          <p className="px-5 py-6 text-sm text-slate-400">Chargement…</p>
+          <div className="flex justify-center p-8">
+            <Spinner />
+          </div>
         ) : expenses.length === 0 ? (
-          <p className="px-5 py-6 text-sm text-slate-400">
-            Aucune dépense ne correspond à tes filtres.
-          </p>
+          <EmptyState
+            title="Aucune dépense"
+            description="Aucune dépense ne correspond à tes filtres, ou tu n'en as encore aucune."
+          />
         ) : (
-          <ul className="divide-y divide-slate-100">
+          <ul className="divide-y divide-border">
             {expenses.map((exp) => (
               <li
                 key={exp.id}
@@ -385,51 +348,53 @@ export default function Expenses() {
               >
                 <div className="flex min-w-0 items-center gap-3">
                   <span
-                    className="h-3 w-3 shrink-0 rounded-full"
+                    className="h-2.5 w-2.5 shrink-0 rounded-full"
                     style={{ backgroundColor: exp.category_color }}
                   />
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-medium text-slate-800">
+                    <p className="truncate text-sm font-medium text-content">
                       {exp.category_name}
                       {exp.description && (
-                        <span className="font-normal text-slate-400">
+                        <span className="font-normal text-faint">
                           {" — "}
                           {exp.description}
                         </span>
                       )}
                     </p>
-                    <p className="text-xs text-slate-400">{fmtDate(exp.date)}</p>
+                    <p className="text-xs text-faint">{fmtDate(exp.date)}</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex shrink-0 items-center gap-1">
                   <span
-                    className={`text-sm font-semibold ${
-                      exp.kind === "income" ? "text-emerald-600" : "text-slate-800"
+                    className={`mr-2 text-sm font-semibold tnum ${
+                      exp.kind === "income" ? "text-positive" : "text-content"
                     }`}
                   >
                     {exp.kind === "income" ? "+" : "−"}
                     {fmt(exp.amount)}
                   </span>
-                  <button
-                    type="button"
+                  <Button
+                    variant="ghost"
                     onClick={() => startEdit(exp)}
-                    className="rounded-md px-2 py-1 text-xs font-medium text-indigo-600 hover:bg-indigo-50"
+                    className="px-2.5 py-1 text-xs"
                   >
                     Modifier
-                  </button>
-                  <button
-                    type="button"
+                  </Button>
+                  <Button
+                    variant="ghost"
                     onClick={() => remove(exp)}
-                    className="rounded-md px-2 py-1 text-xs font-medium text-rose-600 hover:bg-rose-50"
+                    aria-label="Supprimer"
+                    title="Supprimer"
+                    className="h-8 w-8 p-0 text-faint hover:text-negative"
                   >
-                    Supprimer
-                  </button>
+                    <Trash2 size={15} />
+                  </Button>
                 </div>
               </li>
             ))}
           </ul>
         )}
-      </section>
+      </Card>
     </div>
   )
 }

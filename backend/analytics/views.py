@@ -71,3 +71,33 @@ class InsightsView(APIView):
                 "savings_tips": propose_savings(request.user),
             }
         )
+
+
+class NetWorthView(APIView):
+    """GET /api/analytics/net-worth/?months=12 — série du patrimoine net par mois."""
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        from .insights import net_worth_series
+
+        try:
+            months = int(request.query_params.get("months", 12))
+        except ValueError:
+            months = 12
+        months = min(max(months, 2), 36)
+        series = net_worth_series(request.user, months)
+        return Response(
+            {"series": series, "current": series[-1]["value"] if series else 0}
+        )
+
+
+class BreakdownView(APIView):
+    """GET /api/analytics/expense-breakdown/ — dépenses par catégorie (mois courant)."""
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        from .insights import expense_breakdown
+
+        return Response(expense_breakdown(request.user))

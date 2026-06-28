@@ -1,8 +1,20 @@
 import { useEffect, useState, type ChangeEvent, type FormEvent } from "react"
 import type { AxiosError } from "axios"
+import { Plus, Trash2 } from "lucide-react"
 import api from "../api/client"
 import { useAuth } from "../context/AuthContext"
-import { TextField } from "../components/ui"
+import {
+  Alert,
+  Button,
+  Card,
+  CardHeader,
+  EmptyState,
+  Field,
+  PageHeader,
+  Select,
+  Spinner,
+  TextField,
+} from "../components/ui"
 import { extractApiError } from "../lib/apiError"
 
 type Category = { id: number; name: string; kind: string; color: string }
@@ -107,29 +119,21 @@ export default function Revenus() {
     }
   }
 
-  const selectClass =
-    "w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200"
-
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-            Revenus
-          </h1>
-          <p className="text-sm text-slate-500">
-            Salaire, primes, remboursements — ajoute tes rentrées d'argent.
-          </p>
+      <PageHeader
+        title="Revenus"
+        description="Salaire, primes, remboursements — ajoute tes rentrées d'argent."
+      >
+        <div className="rounded-xl border border-positive/25 bg-positive/10 px-4 py-2 text-right">
+          <p className="text-xs text-positive">Total des revenus</p>
+          <p className="text-xl font-bold tnum text-positive">{fmt(total)}</p>
         </div>
-        <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2">
-          <p className="text-xs text-emerald-700">Total des revenus</p>
-          <p className="text-xl font-bold text-emerald-700">{fmt(total)}</p>
-        </div>
-      </div>
+      </PageHeader>
 
       {/* Formulaire */}
-      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <h2 className="mb-4 text-lg font-semibold text-slate-900">
+      <Card className="p-5">
+        <h2 className="mb-4 text-sm font-semibold text-content">
           Ajouter un revenu
         </h2>
         <form onSubmit={submit} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -144,16 +148,12 @@ export default function Revenus() {
             placeholder="0,00"
             required
           />
-          <label className="block">
-            <span className="mb-1 block text-sm font-medium text-slate-700">
-              Catégorie *
-            </span>
-            <select
+          <Field label="Catégorie *">
+            <Select
               name="category"
               value={form.category}
               onChange={onChange}
               required
-              className={selectClass}
             >
               <option value="">Choisir…</option>
               {incomeCats.map((c) => (
@@ -161,8 +161,8 @@ export default function Revenus() {
                   {c.name}
                 </option>
               ))}
-            </select>
-          </label>
+            </Select>
+          </Field>
           <TextField
             label="Date *"
             name="date"
@@ -179,40 +179,33 @@ export default function Revenus() {
             placeholder="Optionnel"
           />
           <div className="flex items-end sm:col-span-2 lg:col-span-4">
-            <button
-              type="submit"
-              className="rounded-lg bg-emerald-600 px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-500"
-            >
-              Ajouter
-            </button>
+            <Button type="submit">
+              <Plus size={16} /> Ajouter
+            </Button>
           </div>
         </form>
-        {error && (
-          <p className="mt-3 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
-            {error}
-          </p>
-        )}
-        {msg && !error && (
-          <p className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
-            {msg}
-          </p>
-        )}
-      </section>
+        {error && <Alert className="mt-4">{error}</Alert>}
+        {msg && !error && <Alert tone="success" className="mt-4">{msg}</Alert>}
+      </Card>
 
-      {/* Liste */}
-      <section className="rounded-2xl border border-slate-200 bg-white shadow-sm">
-        <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
-          <h2 className="font-semibold text-slate-900">Historique des revenus</h2>
-          <span className="text-xs text-slate-400">{revenus.length} revenu(s)</span>
-        </div>
+      {/* Historique */}
+      <Card>
+        <CardHeader title="Historique des revenus">
+          {revenus.length > 0 && (
+            <span className="text-xs text-faint">{revenus.length} revenu(s)</span>
+          )}
+        </CardHeader>
         {loading ? (
-          <p className="px-5 py-6 text-sm text-slate-400">Chargement…</p>
+          <div className="flex justify-center p-8">
+            <Spinner />
+          </div>
         ) : revenus.length === 0 ? (
-          <p className="px-5 py-6 text-sm text-slate-400">
-            Aucun revenu enregistré. Ajoute-en un ci-dessus.
-          </p>
+          <EmptyState
+            title="Aucun revenu"
+            description="Ajoute ton premier revenu ci-dessus pour suivre tes rentrées d'argent."
+          />
         ) : (
-          <ul className="divide-y divide-slate-100">
+          <ul className="divide-y divide-border">
             {revenus.map((r) => (
               <li
                 key={r.id}
@@ -220,39 +213,41 @@ export default function Revenus() {
               >
                 <div className="flex min-w-0 items-center gap-3">
                   <span
-                    className="h-3 w-3 shrink-0 rounded-full"
+                    className="h-2.5 w-2.5 shrink-0 rounded-full"
                     style={{ backgroundColor: r.category_color }}
                   />
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-medium text-slate-800">
+                    <p className="truncate text-sm font-medium text-content">
                       {r.category_name}
                       {r.description && (
-                        <span className="font-normal text-slate-400">
+                        <span className="font-normal text-faint">
                           {" — "}
                           {r.description}
                         </span>
                       )}
                     </p>
-                    <p className="text-xs text-slate-400">{fmtDate(r.date)}</p>
+                    <p className="text-xs text-faint">{fmtDate(r.date)}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
-                  <span className="text-sm font-semibold text-emerald-600">
+                  <span className="text-sm font-semibold tnum text-positive">
                     +{fmt(r.amount)}
                   </span>
-                  <button
-                    type="button"
+                  <Button
+                    variant="ghost"
                     onClick={() => remove(r)}
-                    className="rounded-md px-2 py-1 text-xs font-medium text-rose-600 hover:bg-rose-50"
+                    aria-label="Supprimer"
+                    title="Supprimer"
+                    className="h-8 w-8 p-0 text-faint hover:text-negative"
                   >
-                    Supprimer
-                  </button>
+                    <Trash2 size={16} />
+                  </Button>
                 </div>
               </li>
             ))}
           </ul>
         )}
-      </section>
+      </Card>
     </div>
   )
 }

@@ -1,6 +1,22 @@
 import { useEffect, useState } from "react"
+import {
+  AlertTriangle,
+  ArrowRight,
+  Lightbulb,
+  RefreshCw,
+  Sparkles,
+  TrendingUp,
+} from "lucide-react"
 import api from "../api/client"
 import { useAuth } from "../context/AuthContext"
+import {
+  Badge,
+  Card,
+  CardHeader,
+  EmptyState,
+  PageHeader,
+  Spinner,
+} from "../components/ui"
 
 type Prediction = {
   spent_so_far: number
@@ -52,17 +68,20 @@ export default function Insights() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-20">
-        <div className="h-9 w-9 animate-spin rounded-full border-4 border-slate-200 border-t-indigo-600" />
+      <div className="flex justify-center py-20">
+        <Spinner />
       </div>
     )
   }
 
   if (!data) {
     return (
-      <p className="rounded-2xl border border-slate-200 bg-white p-8 text-center text-sm text-slate-400">
-        Impossible de charger les conseils pour l'instant.
-      </p>
+      <Card>
+        <EmptyState
+          title="Conseils indisponibles"
+          description="Impossible de charger les conseils pour l'instant. Réessaie plus tard."
+        />
+      </Card>
     )
   }
 
@@ -70,135 +89,157 @@ export default function Insights() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <span className="inline-flex items-center rounded-full bg-violet-50 px-3 py-1 text-xs font-medium text-violet-700 ring-1 ring-inset ring-violet-200">
-          Intelligence
-        </span>
-        <h1 className="mt-3 text-2xl font-bold tracking-tight text-slate-900">
-          Conseils IA
-        </h1>
-        <p className="text-sm text-slate-500">
-          Analyses automatiques de tes dépenses, calculées depuis tes données.
-        </p>
-      </div>
+      <PageHeader
+        title="Conseils IA"
+        description="Analyses automatiques de tes dépenses, calculées depuis tes données."
+      >
+        <Badge tone="gold">
+          <Sparkles size={14} /> Intelligence
+        </Badge>
+      </PageHeader>
 
-      {/* Prédiction fin de mois */}
-      <section className="overflow-hidden rounded-2xl border border-violet-200 bg-gradient-to-br from-violet-50 to-white p-6 shadow-sm">
-        <div className="flex items-center gap-2 text-violet-700">
-          <span className="text-lg">📈</span>
-          <h2 className="font-semibold">Prédiction de fin de mois</h2>
+      {/* Héro prédiction — signature or champagne */}
+      <Card className="border-gold/30 p-6 sm:p-8">
+        <div className="flex items-center gap-2 text-gold">
+          <TrendingUp size={18} />
+          <h2 className="text-sm font-semibold uppercase tracking-wide">
+            Prédiction de fin de mois
+          </h2>
         </div>
-        <p className="mt-3 text-sm text-slate-600">
+        <p className="mt-3 text-sm text-muted">
           À ce rythme, tu seras à environ{" "}
-          <strong className="text-xl text-violet-700">
+          <strong className="text-3xl font-bold tnum text-gold sm:text-4xl">
             {fmt(p.projected_total)}
           </strong>{" "}
           de dépenses en fin de mois.
         </p>
-        <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3">
+        <div className="mt-5 grid grid-cols-2 gap-4 border-t border-border pt-5 sm:grid-cols-3">
           <div>
-            <p className="text-xs text-slate-500">Dépensé à ce jour</p>
-            <p className="text-lg font-bold text-slate-900">{fmt(p.spent_so_far)}</p>
+            <p className="text-xs text-faint">Dépensé à ce jour</p>
+            <p className="mt-0.5 text-lg font-bold tnum text-content">
+              {fmt(p.spent_so_far)}
+            </p>
           </div>
           <div>
-            <p className="text-xs text-slate-500">Encore ~ à dépenser</p>
-            <p className="text-lg font-bold text-amber-600">
+            <p className="text-xs text-faint">Encore ~ à dépenser</p>
+            <p className="mt-0.5 text-lg font-bold tnum text-gold">
               {fmt(p.projected_remaining)}
             </p>
           </div>
           <div>
-            <p className="text-xs text-slate-500">Avancement du mois</p>
-            <p className="text-lg font-bold text-slate-900">
+            <p className="text-xs text-faint">Avancement du mois</p>
+            <p className="mt-0.5 text-lg font-bold tnum text-content">
               j{p.days_elapsed}/{p.days_total}
             </p>
           </div>
         </div>
-      </section>
+      </Card>
 
       <div className="grid gap-4 sm:grid-cols-2">
         {/* Abonnements */}
-        <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-          <div className="flex items-center gap-2">
-            <span>🔁</span>
-            <h2 className="font-semibold text-slate-900">Abonnements détectés</h2>
-          </div>
+        <Card>
+          <CardHeader
+            title={
+              <span className="flex items-center gap-2">
+                <RefreshCw size={15} /> Abonnements détectés
+              </span>
+            }
+          />
           {data.subscriptions.length === 0 ? (
-            <p className="mt-3 text-sm text-slate-400">Aucun abonnement récurrent détecté.</p>
+            <EmptyState
+              title="Aucun abonnement"
+              description="Aucun paiement récurrent détecté."
+            />
           ) : (
-            <ul className="mt-3 space-y-2">
+            <ul className="divide-y divide-border">
               {data.subscriptions.map((s) => (
                 <li
                   key={s.description}
-                  className="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2"
+                  className="flex items-center justify-between gap-3 px-5 py-3"
                 >
-                  <div>
-                    <p className="text-sm font-medium text-slate-800">{s.description}</p>
-                    <p className="text-xs text-slate-400">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium text-content">
+                      {s.description}
+                    </p>
+                    <p className="text-xs text-faint">
                       {s.category} · {s.months} mois
                     </p>
                   </div>
-                  <div className="text-right">
-                    <p className="text-sm font-semibold text-slate-900">
+                  <div className="shrink-0 text-right">
+                    <p className="text-sm font-semibold tnum text-content">
                       {fmt(s.monthly)}/mois
                     </p>
-                    <p className="text-xs text-slate-400">{fmt(s.annual)}/an</p>
+                    <p className="text-xs text-faint">{fmt(s.annual)}/an</p>
                   </div>
                 </li>
               ))}
             </ul>
           )}
-        </section>
+        </Card>
 
         {/* Dépenses inhabituelles */}
-        <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-          <div className="flex items-center gap-2">
-            <span>⚠️</span>
-            <h2 className="font-semibold text-slate-900">Dépenses inhabituelles</h2>
-          </div>
+        <Card>
+          <CardHeader
+            title={
+              <span className="flex items-center gap-2">
+                <AlertTriangle size={15} /> Dépenses inhabituelles
+              </span>
+            }
+          />
           {data.unusual.length === 0 ? (
-            <p className="mt-3 text-sm text-slate-400">Rien d'inhabituel ce mois-ci. 👍</p>
+            <EmptyState
+              title="Rien d'inhabituel"
+              description="Pas de dépense anormale ce mois-ci."
+            />
           ) : (
-            <ul className="mt-3 space-y-2">
+            <ul className="divide-y divide-border">
               {data.unusual.map((u) => (
                 <li
                   key={`${u.description}-${u.amount}`}
-                  className="flex items-center justify-between rounded-lg bg-rose-50 px-3 py-2"
+                  className="flex items-center justify-between gap-3 px-5 py-3"
                 >
-                  <div>
-                    <p className="text-sm font-medium text-slate-800">{u.description}</p>
-                    <p className="text-xs text-slate-400">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium text-content">
+                      {u.description}
+                    </p>
+                    <p className="text-xs text-faint">
                       {u.category} · moyenne {fmt(u.category_avg)}
                     </p>
                   </div>
-                  <div className="text-right">
-                    <p className="text-sm font-semibold text-rose-600">{fmt(u.amount)}</p>
-                    <p className="text-xs text-rose-400">×{u.multiplier}</p>
+                  <div className="shrink-0 text-right">
+                    <p className="text-sm font-semibold tnum text-negative">
+                      {fmt(u.amount)}
+                    </p>
+                    <p className="text-xs text-faint">×{u.multiplier}</p>
                   </div>
                 </li>
               ))}
             </ul>
           )}
-        </section>
+        </Card>
       </div>
 
-      {/* Conseils d'économies */}
-      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <div className="flex items-center gap-2">
-          <span>💡</span>
-          <h2 className="font-semibold text-slate-900">Propositions d'économies</h2>
-        </div>
-        <ul className="mt-4 space-y-3">
+      {/* Propositions d'économies */}
+      <Card>
+        <CardHeader
+          title={
+            <span className="flex items-center gap-2">
+              <Lightbulb size={15} className="text-gold" /> Propositions d'économies
+            </span>
+          }
+        />
+        <ul className="space-y-3 p-5">
           {data.savings_tips.map((tip, i) => (
             <li
               key={i}
-              className="flex items-start gap-3 rounded-lg border border-emerald-100 bg-emerald-50/50 px-4 py-3 text-sm text-slate-700"
+              className="flex items-start gap-3 text-sm text-content"
             >
-              <span className="mt-0.5 text-emerald-500">→</span>
+              <ArrowRight size={16} className="mt-0.5 shrink-0 text-positive" />
               <span>{tip}</span>
             </li>
           ))}
         </ul>
-      </section>
+      </Card>
     </div>
   )
 }

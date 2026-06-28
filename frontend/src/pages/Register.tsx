@@ -2,7 +2,8 @@ import { useState, type ChangeEvent, type FormEvent } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import type { AxiosError } from "axios"
 import { useAuth } from "../context/AuthContext"
-import { TextField } from "../components/ui"
+import AuthShell from "../components/AuthShell"
+import { Alert, Button, TextField } from "../components/ui"
 import { extractApiError } from "../lib/apiError"
 
 const EMPTY = {
@@ -51,107 +52,82 @@ export default function Register() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-10">
-      <div className="w-full max-w-md">
-        <div className="mb-6 flex flex-col items-center">
-          <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-600 text-xl font-bold text-white shadow-sm">
-            S
-          </div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-            Créer un compte
-          </h1>
-          <p className="text-sm text-slate-500">
-            Quelques secondes pour rejoindre Sako Trackeur
-          </p>
-        </div>
-
-        <form
-          onSubmit={onSubmit}
-          className="space-y-4 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
-        >
-          {error && (
-            <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
-              {error}
-            </div>
-          )}
-          <TextField
-            label="Nom d'utilisateur *"
-            name="username"
-            value={form.username}
-            onChange={onChange}
-            autoComplete="username"
-            required
-          />
-          <TextField
-            label="E-mail *"
-            name="email"
-            type="email"
-            value={form.email}
-            onChange={onChange}
-            autoComplete="email"
-            required
-          />
-          <div className="grid grid-cols-2 gap-3">
-            <TextField
-              label="Prénom"
-              name="first_name"
-              value={form.first_name}
-              onChange={onChange}
-              autoComplete="given-name"
-            />
-            <TextField
-              label="Nom"
-              name="last_name"
-              value={form.last_name}
-              onChange={onChange}
-              autoComplete="family-name"
-            />
-          </div>
-          <TextField
-            label="Téléphone"
-            name="phone"
-            value={form.phone}
-            onChange={onChange}
-            autoComplete="tel"
-            placeholder="+33 6 12 34 56 78"
-          />
-          <TextField
-            label="Mot de passe *"
-            name="password"
-            type="password"
-            value={form.password}
-            onChange={onChange}
-            autoComplete="new-password"
-            required
-          />
-          <TextField
-            label="Confirmer le mot de passe *"
-            name="password2"
-            type="password"
-            value={form.password2}
-            onChange={onChange}
-            autoComplete="new-password"
-            required
-          />
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {loading ? "Création…" : "Créer mon compte"}
-          </button>
-        </form>
-
-        <p className="mt-4 text-center text-sm text-slate-500">
+    <AuthShell
+      title="Créer un compte"
+      subtitle="Quelques secondes pour rejoindre Sako Trackeur"
+      onSubmit={onSubmit}
+      footer={
+        <>
           Déjà inscrit ?{" "}
-          <Link
-            to="/login"
-            className="font-medium text-indigo-600 hover:text-indigo-500"
-          >
+          <Link to="/login" className="font-medium text-accent hover:underline">
             Connecte-toi
           </Link>
-        </p>
+        </>
+      }
+    >
+      {error && <Alert>{error}</Alert>}
+      <TextField
+        label="Nom d'utilisateur *"
+        name="username"
+        value={form.username}
+        onChange={onChange}
+        autoComplete="username"
+        required
+      />
+      <TextField
+        label="E-mail *"
+        name="email"
+        type="email"
+        value={form.email}
+        onChange={onChange}
+        autoComplete="email"
+        required
+      />
+      <div className="grid grid-cols-2 gap-3">
+        <TextField
+          label="Prénom"
+          name="first_name"
+          value={form.first_name}
+          onChange={onChange}
+          autoComplete="given-name"
+        />
+        <TextField
+          label="Nom"
+          name="last_name"
+          value={form.last_name}
+          onChange={onChange}
+          autoComplete="family-name"
+        />
       </div>
-    </div>
+      <TextField
+        label="Téléphone"
+        name="phone"
+        value={form.phone}
+        onChange={onChange}
+        autoComplete="tel"
+        placeholder="+33 6 12 34 56 78"
+      />
+      <TextField
+        label="Mot de passe *"
+        name="password"
+        type="password"
+        value={form.password}
+        onChange={onChange}
+        autoComplete="new-password"
+        required
+      />
+      <TextField
+        label="Confirmer le mot de passe *"
+        name="password2"
+        type="password"
+        value={form.password2}
+        onChange={onChange}
+        autoComplete="new-password"
+        required
+      />
+      <Button type="submit" className="w-full" disabled={loading}>
+        {loading ? "Création…" : "Créer mon compte"}
+      </Button>
+    </AuthShell>
   )
 }

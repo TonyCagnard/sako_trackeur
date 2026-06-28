@@ -1,7 +1,21 @@
 import { useEffect, useState } from "react"
 import { Link } from "react-router-dom"
+import {
+  ArrowDownRight,
+  ArrowUpRight,
+  Calendar,
+  ChevronRight,
+  PiggyBank,
+  Receipt,
+  Sparkles,
+  Wallet,
+  Zap,
+} from "lucide-react"
 import api from "../api/client"
 import { useAuth } from "../context/AuthContext"
+import { AreaChart } from "../components/AreaChart"
+import { DonutChart } from "../components/DonutChart"
+import { Badge, Card, StatCard } from "../components/ui"
 
 type Summary = {
   today: number
@@ -14,6 +28,9 @@ type Summary = {
   savings_total: number
 }
 
+type SeriesPoint = { month: string; value: number }
+type BreakItem = { name: string; color: string; amount: number; percent: number }
+
 const CURRENCY: Record<string, string> = {
   EUR: "€",
   USD: "$",
@@ -22,13 +39,24 @@ const CURRENCY: Record<string, string> = {
   CAD: "C$",
 }
 
-type Card = {
-  label: string
-  value: number | undefined
-  icon: string
-  accent: string
-  ring: string
-  hint: string
+const RANGES = [
+  { label: "6 mois", months: 6 },
+  { label: "1 an", months: 12 },
+  { label: "Tout", months: 24 },
+] as const
+
+const SHORTCUTS = [
+  { to: "/expenses", label: "Ajouter une dépense", icon: Receipt },
+  { to: "/revenus", label: "Ajouter un revenu", icon: ArrowUpRight },
+  { to: "/conseils", label: "Voir mes conseils IA", icon: Sparkles },
+  { to: "/objectifs", label: "Mes objectifs d'épargne", icon: PiggyBank },
+] as const
+
+function greeting() {
+  const h = new Date().getHours()
+  if (h < 6) return "Bonne nuit"
+  if (h < 18) return "Bonjour"
+  return "Bonsoir"
 }
 
 export default function Dashboard() {
@@ -36,195 +64,198 @@ export default function Dashboard() {
   const currency = user?.currency || "EUR"
   const symbol = CURRENCY[currency] ?? ""
   const [stats, setStats] = useState<Summary | null>(null)
+  const [series, setSeries] = useState<SeriesPoint[]>([])
+  const [breakdown, setBreakdown] = useState<{ items: BreakItem[]; total: number }>({
+    items: [],
+    total: 0,
+  })
+  const [range, setRange] = useState(12)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    api
-      .get<Summary>("/analytics/summary/")
-      .then((res) => setStats(res.data))
-      .catch(() => setStats(null))
+    Promise.all([
+      api.get<Summary>("/analytics/summary/"),
+      api.get<{ items: BreakItem[]; total: number }>("/analytics/expense-breakdown/"),
+    ])
+      .then(([s, b]) => {
+        setStats(s.data)
+        setBreakdown(b.data)
+      })
+      .catch(() => {})
       .finally(() => setLoading(false))
   }, [])
 
+  useEffect(() => {
+    api
+      .get<{ series: SeriesPoint[] }>(`/analytics/net-worth/?months=${range}`)
+      .then((r) => setSeries(r.data.series))
+      .catch(() => {})
+  }, [range])
+
   const fmt = (n: number | undefined) =>
-    (Number(n) || 0).toLocaleString("fr-FR", {
-      style: "currency",
-      currency,
-    })
-
-  const memberSince = user?.date_joined
-    ? new Date(user.date_joined).toLocaleDateString("fr-FR", {
-        day: "numeric",
-        month: "long",
-        year: "numeric",
-      })
-    : "—"
-
-  const cards: Card[] = [
-    {
-      label: "Dépenses du mois",
-      value: stats?.month,
-      icon: "📅",
-      accent: "text-indigo-600",
-      ring: "ring-indigo-100",
-      hint: "Ce mois-ci",
-    },
-    {
-      label: "Dépenses de la semaine",
-      value: stats?.week,
-      icon: "🗓️",
-      accent: "text-blue-600",
-      ring: "ring-blue-100",
-      hint: "Depuis lundi",
-    },
-    {
-      label: "Dépenses du jour",
-      value: stats?.today,
-      icon: "⚡",
-      accent: "text-rose-600",
-      ring: "ring-rose-100",
-      hint: "Aujourd'hui",
-    },
-    {
-      label: "Total général",
-      value: stats?.total,
-      icon: "💰",
-      accent: "text-emerald-600",
-      ring: "ring-emerald-100",
-      hint: "Toutes tes dépenses",
-    },
-  ]
+    (Number(n) || 0).toLocaleString("fr-FR", { style: "currency", currency })
 
   const balance = Number(stats?.balance ?? 0)
   const savingsTotal = Number(stats?.savings_total ?? 0)
+  const today = Number(stats?.today ?? 0)
+  const week = Number(stats?.week ?? 0)
+  const month = Number(stats?.month ?? 0)
+  const total = Number(stats?.total ?? 0)
 
   return (
-    <div className="space-y-8">
-      {/* En-tête */}
+    <div className="space-y-6">
+      {/* Salutation */}
       <div>
-        <span className="inline-flex items-center rounded-full bg-indigo-50 px-3 py-1 text-xs font-medium text-indigo-700 ring-1 ring-inset ring-indigo-200">
-          Espace personnel
-        </span>
-        <h1 className="mt-3 text-3xl font-bold tracking-tight text-slate-900">
-          Bonjour {user?.first_name || user?.username} 👋
+        <p className="text-sm text-muted">{greeting()},</p>
+        <h1 className="mt-0.5 text-2xl font-bold tracking-tight text-content sm:text-3xl">
+          {user?.first_name || user?.username}
         </h1>
-        <p className="mt-1 text-slate-500">
-          Voici un aperçu de tes dépenses — tes données sont privées et propres à
-          ton compte.
-        </p>
       </div>
 
-      {/* 4 cartes statistiques */}
-      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {cards.map((c) => (
-          <div
-            key={c.label}
-            className={`rounded-2xl border border-slate-200 bg-white p-5 shadow-sm ring-1 ${c.ring}`}
-          >
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-slate-500">{c.label}</span>
-              <span className="text-xl" aria-hidden>
-                {c.icon}
-              </span>
+      {/* Héro : patrimoine total + plage + courbe */}
+      <Card className="overflow-hidden">
+        <div className="flex flex-wrap items-start justify-between gap-4 p-6 sm:p-8">
+          <div>
+            <div className="flex items-center gap-2 text-sm font-medium text-muted">
+              <Wallet size={16} /> Patrimoine total
             </div>
-            <p className={`mt-2 text-2xl font-bold tracking-tight ${c.accent}`}>
-              {loading ? "…" : fmt(c.value)}
+            <p className="mt-2 text-4xl font-bold tracking-tight tnum text-content sm:text-5xl">
+              {loading ? "…" : fmt(savingsTotal)}
             </p>
-            <p className="mt-1 text-xs text-slate-400">{c.hint}</p>
+            {!loading && (
+              <div className="mt-3">
+                <Badge tone={balance >= 0 ? "positive" : "negative"}>
+                  {balance >= 0 ? (
+                    <ArrowUpRight size={14} />
+                  ) : (
+                    <ArrowDownRight size={14} />
+                  )}
+                  {balance >= 0 ? "+" : "−"}
+                  {fmt(Math.abs(balance))} ce mois
+                </Badge>
+              </div>
+            )}
           </div>
-        ))}
+
+          {/* Tabs de plage */}
+          <div className="inline-flex rounded-lg bg-surface-2 p-1">
+            {RANGES.map((r) => (
+              <button
+                key={r.months}
+                type="button"
+                onClick={() => setRange(r.months)}
+                className={`rounded-md px-3 py-1.5 text-xs font-medium transition ${
+                  range === r.months
+                    ? "bg-surface text-content shadow-sm"
+                    : "text-muted hover:text-content"
+                }`}
+              >
+                {r.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="px-2 pb-5 sm:px-4">
+          {!loading && <AreaChart data={series} height={240} />}
+        </div>
+      </Card>
+
+      {/* Dépenses : aujourd'hui / semaine / mois / total */}
+      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <StatCard
+          label="Aujourd'hui"
+          value={loading ? "…" : fmt(today)}
+          icon={<Zap size={16} />}
+          hint="Dépenses du jour"
+        />
+        <StatCard
+          label="Cette semaine"
+          value={loading ? "…" : fmt(week)}
+          icon={<Calendar size={16} />}
+          hint="Depuis lundi"
+        />
+        <StatCard
+          label="Ce mois-ci"
+          value={loading ? "…" : fmt(month)}
+          icon={<Receipt size={16} />}
+          tone="negative"
+          hint="Dépenses du mois"
+        />
+        <StatCard
+          label="Total dépenses"
+          value={loading ? "…" : fmt(total)}
+          icon={<Wallet size={16} />}
+          hint="Cumul depuis le début"
+        />
       </section>
 
-      {/* Revenus & épargne */}
-      {stats && (
-        <section className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-          <div>
-            <p className="text-sm text-slate-500">Revenus du mois</p>
-            <p className="text-xl font-bold text-emerald-600">
-              {fmt(stats.income_month)}
+      {/* Répartition par catégorie + raccourcis */}
+      <section className="grid gap-4 lg:grid-cols-3">
+        <Card className="p-5 lg:col-span-2">
+          <h2 className="mb-4 text-sm font-semibold text-content">
+            Dépenses par catégorie <span className="text-faint">· ce mois</span>
+          </h2>
+          {breakdown.items.length === 0 ? (
+            <p className="py-8 text-center text-sm text-muted">
+              Aucune dépense ce mois-ci.
             </p>
-          </div>
-          <div className="hidden h-10 w-px bg-slate-200 sm:block" />
-          <div>
-            <p className="text-sm text-slate-500">Épargne du mois</p>
-            <p
-              className={`text-xl font-bold ${
-                balance >= 0 ? "text-emerald-600" : "text-rose-600"
-              }`}
-            >
-              {balance >= 0 ? "+" : "−"}
-              {fmt(Math.abs(balance))}
-            </p>
-          </div>
-          <div className="hidden h-10 w-px bg-slate-200 sm:block" />
-          <div>
-            <p className="text-sm text-slate-500">Épargne totale</p>
-            <p
-              className={`text-xl font-bold ${
-                savingsTotal >= 0 ? "text-emerald-600" : "text-rose-600"
-              }`}
-            >
-              {savingsTotal >= 0 ? "+" : "−"}
-              {fmt(Math.abs(savingsTotal))}
-            </p>
-          </div>
-          <Link
-            to="/revenus"
-            className="ml-auto rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-500"
-          >
-            + Revenu
-          </Link>
-        </section>
-      )}
+          ) : (
+            <div className="flex flex-col items-center gap-6 sm:flex-row">
+              <DonutChart
+                data={breakdown.items.map((i) => ({ value: i.amount, color: i.color }))}
+                center={
+                  <>
+                    <span className="text-xs text-faint">Total</span>
+                    <span className="text-lg font-bold tnum text-content">
+                      {fmt(breakdown.total)}
+                    </span>
+                  </>
+                }
+              />
+              <ul className="w-full flex-1 space-y-2">
+                {breakdown.items.map((i) => (
+                  <li key={i.name} className="flex items-center gap-3 text-sm">
+                    <span
+                      className="h-2.5 w-2.5 shrink-0 rounded-full"
+                      style={{ backgroundColor: i.color }}
+                    />
+                    <span className="flex-1 truncate text-content">{i.name}</span>
+                    <span className="text-xs text-faint tnum">{i.percent}%</span>
+                    <span className="w-24 text-right font-medium tnum text-content">
+                      {fmt(i.amount)}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </Card>
 
-      {/* Mon compte */}
-      <section className="grid gap-4 sm:grid-cols-2">
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-          <h2 className="mb-3 font-semibold text-slate-900">Mon compte</h2>
-          <dl className="space-y-2 text-sm">
-            <div className="flex justify-between">
-              <dt className="text-slate-500">Identifiant</dt>
-              <dd className="font-medium text-slate-800">{user?.username}</dd>
-            </div>
-            <div className="flex justify-between">
-              <dt className="text-slate-500">E-mail</dt>
-              <dd className="font-medium text-slate-800">{user?.email}</dd>
-            </div>
-            <div className="flex justify-between">
-              <dt className="text-slate-500">Devise</dt>
-              <dd className="font-medium text-slate-800">
-                {currency} ({symbol})
-              </dd>
-            </div>
-            <div className="flex justify-between">
-              <dt className="text-slate-500">Membre depuis</dt>
-              <dd className="font-medium text-slate-800">{memberSince}</dd>
-            </div>
-          </dl>
-        </div>
-
-        <div className="rounded-2xl border border-dashed border-indigo-200 bg-indigo-50/40 p-5">
-          <h2 className="mb-2 font-semibold text-slate-900">Conseil</h2>
-          <p className="text-sm text-slate-600">
-            Ajoute tes dépenses au fil de l'eau pour garder des statistiques
-            fiables. Pense à enregistrer ton salaire comme « Salaire » (revenu)
-            pour suivre ton solde mensuel.
+        <Card className="p-2">
+          <h2 className="px-3 py-3 text-sm font-semibold text-content">
+            Raccourcis
+          </h2>
+          <div className="space-y-0.5">
+            {SHORTCUTS.map(({ to, label, icon: Icon }) => (
+              <Link
+                key={to}
+                to={to}
+                className="group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted transition hover:bg-surface-2 hover:text-content"
+              >
+                <Icon size={16} />
+                <span className="flex-1">{label}</span>
+                <ChevronRight
+                  size={16}
+                  className="text-faint transition group-hover:text-content"
+                />
+              </Link>
+            ))}
+          </div>
+          <p className="px-3 pb-2 pt-3 text-xs text-faint">
+            Devise : {currency} ({symbol})
           </p>
-          <div className="mt-3 flex gap-2">
-            <Link
-              to="/expenses"
-              className="rounded-md bg-white px-3 py-1.5 text-xs font-medium text-indigo-700 ring-1 ring-inset ring-indigo-200 hover:bg-indigo-50"
-            >
-              + Dépense
-            </Link>
-            <Link
-              to="/categories"
-              className="rounded-md bg-white px-3 py-1.5 text-xs font-medium text-slate-700 ring-1 ring-inset ring-slate-300 hover:bg-slate-50"
-            >
-              Catégories
-            </Link>
-          </div>
-        </div>
+        </Card>
       </section>
     </div>
   )

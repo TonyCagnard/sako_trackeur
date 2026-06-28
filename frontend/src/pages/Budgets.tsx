@@ -1,8 +1,20 @@
 import { useEffect, useState, type ChangeEvent, type FormEvent } from "react"
 import type { AxiosError } from "axios"
+import { AlertTriangle, Pencil, Trash2 } from "lucide-react"
 import api from "../api/client"
 import { useAuth } from "../context/AuthContext"
-import { TextField } from "../components/ui"
+import {
+  Alert,
+  Button,
+  Card,
+  EmptyState,
+  Field,
+  PageHeader,
+  ProgressBar,
+  Select,
+  Spinner,
+  TextField,
+} from "../components/ui"
 import { extractApiError } from "../lib/apiError"
 
 type Category = {
@@ -59,10 +71,10 @@ export default function Budgets() {
   const fmt = (n: number | string) =>
     Number(n).toLocaleString("fr-FR", { style: "currency", currency })
 
-  // Catégories disponibles = dépenses sans budget (sauf celle en cours d'édition)
   const budgetedIds = new Set(budgets.map((b) => b.category))
   const availableCats = categories.filter(
-    (c) => c.kind === "expense" && (!budgetedIds.has(c.id) || c.id === Number(form.category))
+    (c) =>
+      c.kind === "expense" && (!budgetedIds.has(c.id) || c.id === Number(form.category))
   )
 
   const onChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
@@ -122,43 +134,30 @@ export default function Budgets() {
     }
   }
 
-  const barColor = (b: Budget) =>
-    b.is_over
-      ? "bg-rose-500"
-      : b.percentage >= 80
-        ? "bg-amber-500"
-        : "bg-indigo-500"
-
-  const selectClass =
-    "w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
+  const tone = (b: Budget) =>
+    b.is_over ? "danger" : b.percentage >= 80 ? "gold" : "accent"
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900">Budgets</h1>
-        <p className="text-sm text-slate-500">
-          Fixe un plafond mensuel par catégorie et suis ta consommation en temps réel.
-        </p>
-      </div>
+      <PageHeader
+        title="Budgets"
+        description="Fixe un plafond mensuel par catégorie et suis ta consommation en temps réel."
+      />
 
       {/* Formulaire */}
-      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <h2 className="mb-4 text-lg font-semibold text-slate-900">
+      <Card className="p-5">
+        <h2 className="mb-4 text-sm font-semibold text-content">
           {editingId ? "Modifier le budget" : "Définir un budget"}
         </h2>
         <form onSubmit={submit} className="flex flex-wrap items-end gap-3">
           <div className="min-w-[200px] flex-1">
-            <label className="block">
-              <span className="mb-1 block text-sm font-medium text-slate-700">
-                Catégorie
-              </span>
-              <select
+            <Field label="Catégorie">
+              <Select
                 name="category"
                 value={form.category}
                 onChange={onChange}
                 disabled={!!editingId}
                 required
-                className={selectClass}
               >
                 <option value="">Choisir…</option>
                 {availableCats.map((c) => (
@@ -166,8 +165,8 @@ export default function Budgets() {
                     {c.name}
                   </option>
                 ))}
-              </select>
-            </label>
+              </Select>
+            </Field>
           </div>
           <div className="w-40">
             <TextField
@@ -182,129 +181,111 @@ export default function Budgets() {
               required
             />
           </div>
-          <button
-            type="submit"
-            className="rounded-lg bg-indigo-600 px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-500"
-          >
-            {editingId ? "Enregistrer" : "Définir"}
-          </button>
+          <Button type="submit">{editingId ? "Enregistrer" : "Définir"}</Button>
           {editingId && (
-            <button
-              type="button"
-              onClick={reset}
-              className="rounded-lg px-3 py-2 text-sm font-medium text-slate-500 hover:bg-slate-100"
-            >
+            <Button type="button" variant="ghost" onClick={reset}>
               Annuler
-            </button>
+            </Button>
           )}
         </form>
-        {error && (
-          <p className="mt-3 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
-            {error}
-          </p>
-        )}
-        {msg && !error && (
-          <p className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
-            {msg}
-          </p>
-        )}
-      </section>
+        {error && <Alert className="mt-4">{error}</Alert>}
+        {msg && !error && <Alert tone="success" className="mt-4">{msg}</Alert>}
+      </Card>
 
-      {/* Liste des budgets avec barres de progression */}
+      {/* Budgets */}
       {loading ? (
-        <p className="text-sm text-slate-400">Chargement…</p>
+        <div className="flex justify-center py-8">
+          <Spinner />
+        </div>
       ) : budgets.length === 0 ? (
-        <p className="rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-center text-sm text-slate-400">
-          Aucun budget pour l'instant. Définis ton premier budget ci-dessus.
-        </p>
+        <Card>
+          <EmptyState
+            title="Aucun budget"
+            description="Définis ton premier budget ci-dessus pour suivre tes dépenses par catégorie."
+          />
+        </Card>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2">
-          {budgets.map((b) => {
-            const width = Math.min(b.percentage, 100)
-            return (
-              <div
-                key={b.id}
-                className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2.5">
-                    <span
-                      className="h-3.5 w-3.5 rounded-full"
-                      style={{ backgroundColor: b.category_color }}
-                    />
-                    <span className="font-semibold text-slate-800">
-                      {b.category_name}
-                    </span>
-                  </div>
-                  <span className="text-sm text-slate-400">
-                    Budget {fmt(b.amount)} / mois
+          {budgets.map((b) => (
+            <Card key={b.id} className="p-5">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <span
+                    className="h-3.5 w-3.5 rounded-full"
+                    style={{ backgroundColor: b.category_color }}
+                  />
+                  <span className="font-semibold text-content">
+                    {b.category_name}
                   </span>
                 </div>
+                <span className="text-xs text-faint">
+                  Budget {fmt(b.amount)} / mois
+                </span>
+              </div>
 
-                {/* Barre de progression */}
-                <div className="mt-4">
-                  <div className="h-3 w-full overflow-hidden rounded-full bg-slate-100">
-                    <div
-                      className={`h-full rounded-full transition-all ${barColor(b)}`}
-                      style={{ width: `${width}%` }}
-                    />
-                  </div>
-                  <div className="mt-2 flex items-center justify-between text-sm">
-                    <span className="text-slate-600">
-                      Dépensé <strong>{fmt(b.spent)}</strong>
-                    </span>
-                    <span
-                      className={`font-semibold ${
-                        b.is_over ? "text-rose-600" : "text-slate-700"
-                      }`}
-                    >
-                      {b.percentage}%
-                    </span>
-                  </div>
-                </div>
-
-                {/* Restant / dépassé */}
-                <p className="mt-2 text-sm">
-                  {b.is_over ? (
-                    <span className="font-medium text-rose-600">
-                      Dépassé de {fmt(Math.abs(Number(b.remaining)))}
-                    </span>
-                  ) : (
-                    <span className="text-slate-600">
-                      Restant{" "}
-                      <strong className="text-emerald-600">{fmt(b.remaining)}</strong>
-                    </span>
-                  )}
-                </p>
-
-                {/* Alerte dépassement */}
-                {b.is_over && (
-                  <div className="mt-3 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
-                    ⚠️ Budget dépassé ce mois-ci. Pense à réduire tes dépenses en{" "}
-                    {b.category_name.toLowerCase()}.
-                  </div>
-                )}
-
-                {/* Actions */}
-                <div className="mt-4 flex gap-2 border-t border-slate-100 pt-3">
-                  <button
-                    type="button"
-                    onClick={() => startEdit(b)}
-                    className="rounded-md px-2.5 py-1 text-sm font-medium text-indigo-600 hover:bg-indigo-50"
+              <div className="mt-4">
+                <ProgressBar value={b.percentage} tone={tone(b)} />
+                <div className="mt-2 flex items-center justify-between text-sm">
+                  <span className="text-muted">
+                    Dépensé <strong className="tnum text-content">{fmt(b.spent)}</strong>
+                  </span>
+                  <span
+                    className={`font-semibold tnum ${
+                      b.is_over ? "text-negative" : "text-content"
+                    }`}
                   >
-                    Modifier
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => remove(b)}
-                    className="rounded-md px-2.5 py-1 text-sm font-medium text-rose-600 hover:bg-rose-50"
-                  >
-                    Supprimer
-                  </button>
+                    {b.percentage}%
+                  </span>
                 </div>
               </div>
-            )
-          })}
+
+              <p className="mt-2 text-sm">
+                {b.is_over ? (
+                  <span className="font-medium text-negative">
+                    Dépassé de {fmt(Math.abs(Number(b.remaining)))}
+                  </span>
+                ) : (
+                  <span className="text-muted">
+                    Restant{" "}
+                    <strong className="font-semibold text-positive tnum">
+                      {fmt(b.remaining)}
+                    </strong>
+                  </span>
+                )}
+              </p>
+
+              {b.is_over && (
+                <Alert className="mt-3" tone="error">
+                  <span className="flex items-start gap-2">
+                    <AlertTriangle size={15} className="mt-0.5 shrink-0" />
+                    <span>
+                      Budget dépassé ce mois-ci. Pense à réduire tes dépenses en{" "}
+                      {b.category_name.toLowerCase()}.
+                    </span>
+                  </span>
+                </Alert>
+              )}
+
+              <div className="mt-4 flex gap-2 border-t border-border pt-3">
+                <Button
+                  variant="ghost"
+                  onClick={() => startEdit(b)}
+                  className="px-2.5 py-1 text-xs"
+                >
+                  <Pencil size={13} /> Modifier
+                </Button>
+                <Button
+                  variant="ghost"
+                  onClick={() => remove(b)}
+                  aria-label="Supprimer"
+                  title="Supprimer"
+                  className="h-8 w-8 p-0 text-faint hover:text-negative"
+                >
+                  <Trash2 size={15} />
+                </Button>
+              </div>
+            </Card>
+          ))}
         </div>
       )}
     </div>

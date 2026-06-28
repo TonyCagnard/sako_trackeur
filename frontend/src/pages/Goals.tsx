@@ -1,8 +1,20 @@
 import { useEffect, useState, type ChangeEvent, type FormEvent } from "react"
 import type { AxiosError } from "axios"
+import { Trash2, Trophy } from "lucide-react"
 import api from "../api/client"
 import { useAuth } from "../context/AuthContext"
-import { TextField } from "../components/ui"
+import {
+  Alert,
+  Badge,
+  Button,
+  Card,
+  EmptyState,
+  Input,
+  PageHeader,
+  ProgressBar,
+  Spinner,
+  TextField,
+} from "../components/ui"
 import { extractApiError } from "../lib/apiError"
 
 type Goal = {
@@ -91,19 +103,14 @@ export default function Goals() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-          Objectifs
-        </h1>
-        <p className="text-sm text-slate-500">
-          Épargne pour tes projets : définis une cible et ajoute de l'argent au
-          fur et à mesure.
-        </p>
-      </div>
+      <PageHeader
+        title="Objectifs"
+        description="Épargne pour tes projets : définis une cible et ajoute de l'argent au fur et à mesure."
+      />
 
-      {/* Formulaire de création */}
-      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <h2 className="mb-4 text-lg font-semibold text-slate-900">
+      {/* Création */}
+      <Card className="p-5">
+        <h2 className="mb-4 text-sm font-semibold text-content">
           Créer un objectif
         </h2>
         <form onSubmit={submit} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -122,7 +129,7 @@ export default function Goals() {
                   key={p}
                   type="button"
                   onClick={() => setForm((f) => ({ ...f, name: p }))}
-                  className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs text-slate-600 hover:bg-slate-200"
+                  className="rounded-full bg-surface-2 px-2.5 py-0.5 text-xs text-muted ring-1 ring-inset ring-border transition hover:text-content"
                 >
                   {p}
                 </button>
@@ -151,119 +158,106 @@ export default function Goals() {
             placeholder="0"
           />
           <div className="flex items-end">
-            <button
-              type="submit"
-              className="w-full rounded-lg bg-indigo-600 px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-500"
-            >
+            <Button type="submit" className="w-full">
               Créer
-            </button>
+            </Button>
           </div>
         </form>
-        {error && (
-          <p className="mt-3 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
-            {error}
-          </p>
-        )}
-        {msg && !error && (
-          <p className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
-            {msg}
-          </p>
-        )}
-      </section>
+        {error && <Alert className="mt-4">{error}</Alert>}
+        {msg && !error && <Alert tone="success" className="mt-4">{msg}</Alert>}
+      </Card>
 
-      {/* Liste des objectifs */}
+      {/* Objectifs */}
       {loading ? (
-        <p className="text-sm text-slate-400">Chargement…</p>
+        <div className="flex justify-center py-8">
+          <Spinner />
+        </div>
       ) : goals.length === 0 ? (
-        <p className="rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-center text-sm text-slate-400">
-          Aucun objectif. Crée ton premier objectif ci-dessus.
-        </p>
+        <Card>
+          <EmptyState
+            title="Aucun objectif"
+            description="Crée ton premier objectif d'épargne ci-dessus."
+          />
+        </Card>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2">
-          {goals.map((g) => {
-            const width = Math.min(g.progression, 100)
-            return (
-              <div
-                key={g.id}
-                className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
-              >
-                <div className="flex items-start justify-between">
-                  <div>
-                    <h3 className="font-semibold text-slate-900">{g.name}</h3>
-                    <p className="text-xs text-slate-400">
-                      Objectif {fmt(g.target_amount)}
-                    </p>
-                  </div>
-                  {g.is_reached ? (
-                    <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-medium text-emerald-700">
-                      🎉 Atteint
-                    </span>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => remove(g)}
-                      className="rounded-md px-2 py-1 text-xs font-medium text-rose-600 hover:bg-rose-50"
-                    >
-                      Supprimer
-                    </button>
-                  )}
+          {goals.map((g) => (
+            <Card key={g.id} className="p-5">
+              <div className="flex items-start justify-between">
+                <div>
+                  <h3 className="font-semibold text-content">{g.name}</h3>
+                  <p className="text-xs text-faint">Objectif {fmt(g.target_amount)}</p>
                 </div>
-
-                {/* Barre de progression */}
-                <div className="mt-4">
-                  <div className="h-3 w-full overflow-hidden rounded-full bg-slate-100">
-                    <div
-                      className={`h-full rounded-full transition-all ${
-                        g.is_reached ? "bg-emerald-600" : "bg-emerald-500"
-                      }`}
-                      style={{ width: `${width}%` }}
-                    />
-                  </div>
-                  <div className="mt-2 flex items-center justify-between text-sm">
-                    <span className="text-slate-600">
-                      <strong>{fmt(g.current_amount)}</strong> / {fmt(g.target_amount)}
-                    </span>
-                    <span className="font-semibold text-emerald-700">
-                      {g.progression}%
-                    </span>
-                  </div>
-                </div>
-
-                <p className="mt-2 text-sm text-slate-500">
-                  {g.is_reached
-                    ? `Bravo, objectif dépassé de ${fmt(Math.abs(Number(g.remaining)))} !`
-                    : `Reste ${fmt(g.remaining)} à économiser.`}
-                </p>
-
-                {/* Contribuer */}
-                <form
-                  onSubmit={(e) => {
-                    e.preventDefault()
-                    contribute(g)
-                  }}
-                  className="mt-4 flex items-center gap-2 border-t border-slate-100 pt-3"
-                >
-                  <input
-                    type="number"
-                    min="0.01"
-                    step="0.01"
-                    value={contributions[g.id] ?? ""}
-                    onChange={(e) =>
-                      setContributions((c) => ({ ...c, [g.id]: e.target.value }))
-                    }
-                    placeholder="Ajouter €"
-                    className="w-28 rounded-lg border border-slate-300 px-3 py-1.5 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200"
-                  />
-                  <button
-                    type="submit"
-                    className="rounded-lg bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-emerald-500"
+                {g.is_reached ? (
+                  <Badge tone="gold">
+                    <Trophy size={13} /> Atteint
+                  </Badge>
+                ) : (
+                  <Button
+                    variant="ghost"
+                    onClick={() => remove(g)}
+                    aria-label="Supprimer"
+                    title="Supprimer"
+                    className="h-8 w-8 p-0 text-faint hover:text-negative"
                   >
-                    Épargner
-                  </button>
-                </form>
+                    <Trash2 size={15} />
+                  </Button>
+                )}
               </div>
-            )
-          })}
+
+              <div className="mt-4">
+                <ProgressBar
+                  value={g.progression}
+                  tone={g.is_reached ? "gold" : "accent"}
+                />
+                <div className="mt-2 flex items-center justify-between text-sm">
+                  <span className="text-muted">
+                    <strong className="tnum text-content">
+                      {fmt(g.current_amount)}
+                    </strong>{" "}
+                    / {fmt(g.target_amount)}
+                  </span>
+                  <span
+                    className={`font-semibold tnum ${
+                      g.is_reached ? "text-gold" : "text-accent"
+                    }`}
+                  >
+                    {g.progression}%
+                  </span>
+                </div>
+              </div>
+
+              <p className="mt-2 text-sm text-muted">
+                {g.is_reached
+                  ? `Bravo, objectif dépassé de ${fmt(Math.abs(Number(g.remaining)))} !`
+                  : `Reste ${fmt(g.remaining)} à économiser.`}
+              </p>
+
+              {/* Contribuer */}
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault()
+                  contribute(g)
+                }}
+                className="mt-4 flex items-center gap-2 border-t border-border pt-3"
+              >
+                <Input
+                  type="number"
+                  min="0.01"
+                  step="0.01"
+                  value={contributions[g.id] ?? ""}
+                  onChange={(e) =>
+                    setContributions((c) => ({ ...c, [g.id]: e.target.value }))
+                  }
+                  placeholder="Montant"
+                  className="w-32"
+                />
+                <Button type="submit" variant="subtle">
+                  Épargner
+                </Button>
+              </form>
+            </Card>
+          ))}
         </div>
       )}
     </div>

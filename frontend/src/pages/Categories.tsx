@@ -1,8 +1,20 @@
 import { useEffect, useState, type ChangeEvent, type FormEvent } from "react"
 import type { AxiosError } from "axios"
+import { Trash2 } from "lucide-react"
 import api from "../api/client"
+import {
+  Alert,
+  Badge,
+  Button,
+  Card,
+  EmptyState,
+  Field,
+  PageHeader,
+  Select,
+  Spinner,
+  TextField,
+} from "../components/ui"
 import { extractApiError } from "../lib/apiError"
-import { TextField } from "../components/ui"
 
 type Kind = "expense" | "income"
 
@@ -14,7 +26,7 @@ type Category = {
   created_at: string
 }
 
-const EMPTY = { name: "", kind: "expense" as Kind, color: "#6366f1" }
+const EMPTY = { name: "", kind: "expense" as Kind, color: "#10b981" }
 
 const KIND_LABEL: Record<Kind, string> = {
   expense: "Dépense",
@@ -54,9 +66,7 @@ export default function Categories() {
     try {
       if (editingId) {
         const { data } = await api.patch<Category>(`/categories/${editingId}/`, form)
-        setCategories((cs) =>
-          cs.map((c) => (c.id === editingId ? data : c))
-        )
+        setCategories((cs) => cs.map((c) => (c.id === editingId ? data : c)))
         setMsg("Catégorie modifiée.")
       } else {
         const { data } = await api.post<Category>("/categories/", form)
@@ -93,33 +103,35 @@ export default function Categories() {
   const renderRow = (c: Category) => (
     <li
       key={c.id}
-      className="flex items-center justify-between rounded-lg border border-slate-200 bg-white px-3 py-2"
+      className="flex items-center justify-between gap-3 rounded-lg border border-border bg-surface px-3 py-2.5"
     >
-      <div className="flex items-center gap-3">
+      <div className="flex min-w-0 items-center gap-3">
         <span
-          className="h-4 w-4 rounded-full ring-2 ring-white"
+          className="h-3.5 w-3.5 shrink-0 rounded-full"
           style={{ backgroundColor: c.color }}
         />
-        <span className="font-medium text-slate-800">{c.name}</span>
-        <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-500">
+        <span className="truncate text-sm font-medium text-content">{c.name}</span>
+        <Badge tone={c.kind === "income" ? "positive" : "default"}>
           {KIND_LABEL[c.kind]}
-        </span>
+        </Badge>
       </div>
-      <div className="flex items-center gap-2">
-        <button
-          type="button"
+      <div className="flex shrink-0 items-center gap-1">
+        <Button
+          variant="ghost"
           onClick={() => startEdit(c)}
-          className="rounded-md px-2.5 py-1 text-sm font-medium text-indigo-600 hover:bg-indigo-50"
+          className="px-2.5 py-1 text-xs"
         >
           Modifier
-        </button>
-        <button
-          type="button"
+        </Button>
+        <Button
+          variant="ghost"
           onClick={() => remove(c)}
-          className="rounded-md px-2.5 py-1 text-sm font-medium text-rose-600 hover:bg-rose-50"
+          aria-label="Supprimer"
+          title="Supprimer"
+          className="h-8 w-8 p-0 text-faint hover:text-negative"
         >
-          Supprimer
-        </button>
+          <Trash2 size={15} />
+        </Button>
       </div>
     </li>
   )
@@ -128,20 +140,15 @@ export default function Categories() {
   const incomes = categories.filter((c) => c.kind === "income")
 
   return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-          Catégories
-        </h1>
-        <p className="text-sm text-slate-500">
-          Organise tes dépenses et revenus. Les 9 catégories par défaut sont déjà
-          créées — ajoute, modifie ou supprime comme tu veux.
-        </p>
-      </div>
+    <div className="space-y-6">
+      <PageHeader
+        title="Catégories"
+        description="Organise tes dépenses et revenus. Les catégories par défaut sont déjà créées — ajoute, modifie ou supprime comme tu veux."
+      />
 
       {/* Formulaire ajout / édition */}
-      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <h2 className="mb-4 text-lg font-semibold text-slate-900">
+      <Card className="p-5">
+        <h2 className="mb-4 text-sm font-semibold text-content">
           {editingId ? "Modifier la catégorie" : "Ajouter une catégorie"}
         </h2>
         <form onSubmit={submit} className="flex flex-wrap items-end gap-3">
@@ -155,69 +162,51 @@ export default function Categories() {
               required
             />
           </div>
-          <label className="block">
-            <span className="mb-1 block text-sm font-medium text-slate-700">Type</span>
-            <select
-              name="kind"
-              value={form.kind}
-              onChange={onChange}
-              className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
-            >
+          <Field label="Type">
+            <Select name="kind" value={form.kind} onChange={onChange}>
               <option value="expense">Dépense</option>
               <option value="income">Revenu</option>
-            </select>
-          </label>
-          <label className="block">
-            <span className="mb-1 block text-sm font-medium text-slate-700">Couleur</span>
+            </Select>
+          </Field>
+          <Field label="Couleur">
             <input
               type="color"
               name="color"
               value={form.color}
               onChange={onChange}
-              className="h-[42px] w-14 cursor-pointer rounded-lg border border-slate-300 bg-white p-1"
+              className="h-10 w-16 cursor-pointer rounded-lg border border-border bg-canvas p-1"
             />
-          </label>
-          <button
-            type="submit"
-            className="rounded-lg bg-indigo-600 px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-500"
-          >
-            {editingId ? "Enregistrer" : "Ajouter"}
-          </button>
+          </Field>
+          <Button type="submit">{editingId ? "Enregistrer" : "Ajouter"}</Button>
           {editingId && (
-            <button
-              type="button"
-              onClick={reset}
-              className="rounded-lg px-3 py-2 text-sm font-medium text-slate-500 hover:bg-slate-100"
-            >
+            <Button type="button" variant="ghost" onClick={reset}>
               Annuler
-            </button>
+            </Button>
           )}
         </form>
-        {error && (
-          <p className="mt-3 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
-            {error}
-          </p>
-        )}
-        {msg && !error && (
-          <p className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
-            {msg}
-          </p>
-        )}
-      </section>
+        {error && <Alert className="mt-4">{error}</Alert>}
+        {msg && !error && <Alert tone="success" className="mt-4">{msg}</Alert>}
+      </Card>
 
       {/* Listes */}
       {loading ? (
-        <p className="text-sm text-slate-400">Chargement…</p>
+        <div className="flex justify-center py-8">
+          <Spinner />
+        </div>
+      ) : categories.length === 0 ? (
+        <Card>
+          <EmptyState title="Aucune catégorie" description="Crée ta première catégorie ci-dessus." />
+        </Card>
       ) : (
         <div className="grid gap-6 sm:grid-cols-2">
           <section>
-            <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-400">
+            <h2 className="mb-3 px-1 text-xs font-semibold uppercase tracking-wide text-faint">
               Dépenses ({expenses.length})
             </h2>
             <ul className="space-y-2">{expenses.map(renderRow)}</ul>
           </section>
           <section>
-            <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-400">
+            <h2 className="mb-3 px-1 text-xs font-semibold uppercase tracking-wide text-faint">
               Revenus ({incomes.length})
             </h2>
             <ul className="space-y-2">{incomes.map(renderRow)}</ul>

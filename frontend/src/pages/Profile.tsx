@@ -2,7 +2,16 @@ import { useState, type ChangeEvent, type FormEvent } from "react"
 import type { AxiosError } from "axios"
 import api from "../api/client"
 import { useAuth } from "../context/AuthContext"
-import { TextField } from "../components/ui"
+import {
+  Alert,
+  Button,
+  Card,
+  CardHeader,
+  Field,
+  PageHeader,
+  Select,
+  TextField,
+} from "../components/ui"
 import { extractApiError } from "../lib/apiError"
 
 type Status = { ok: boolean; text: string }
@@ -74,28 +83,18 @@ export default function Profile() {
   }
 
   return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900">Mon profil</h1>
-        <p className="text-sm text-slate-500">
-          Gère tes informations personnelles et ton mot de passe.
-        </p>
-      </div>
+    <div className="space-y-6">
+      <PageHeader
+        title="Mon profil"
+        description="Gère tes informations personnelles et ton mot de passe."
+      />
 
       {/* Informations */}
-      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <h2 className="mb-4 text-lg font-semibold text-slate-900">Informations</h2>
-        <form onSubmit={submitProfile} className="space-y-4">
-          {profileErr && (
-            <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
-              {profileErr}
-            </div>
-          )}
-          {profileStatus?.ok && (
-            <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
-              {profileStatus.text}
-            </div>
-          )}
+      <Card>
+        <CardHeader title="Informations" description="Ton identité et tes préférences." />
+        <form onSubmit={submitProfile} className="space-y-4 p-5">
+          {profileErr && <Alert>{profileErr}</Alert>}
+          {profileStatus?.ok && <Alert tone="success">{profileStatus.text}</Alert>}
           <div className="grid gap-4 sm:grid-cols-2">
             <TextField
               label="Prénom"
@@ -110,51 +109,37 @@ export default function Profile() {
               onChange={onChange}
             />
           </div>
-          <TextField label="Téléphone" name="phone" value={form.phone} onChange={onChange} />
-          <label className="block">
-            <span className="mb-1 block text-sm font-medium text-slate-700">Devise</span>
-            <select
-              name="currency"
-              value={form.currency}
-              onChange={onChange}
-              className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
-            >
+          <TextField
+            label="Téléphone"
+            name="phone"
+            value={form.phone}
+            onChange={onChange}
+            placeholder="+33 6 12 34 56 78"
+          />
+          <Field label="Devise">
+            <Select name="currency" value={form.currency} onChange={onChange}>
               <option value="EUR">EUR — Euro (€)</option>
               <option value="USD">USD — Dollar US ($)</option>
               <option value="GBP">GBP — Livre sterling (£)</option>
               <option value="CHF">CHF — Franc suisse</option>
               <option value="CAD">CAD — Dollar canadien</option>
-            </select>
-          </label>
-          <div className="flex items-center gap-3 pt-2">
-            <button
-              type="submit"
-              disabled={savingProfile}
-              className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-60"
-            >
+            </Select>
+          </Field>
+          <div className="flex items-center gap-3 pt-1">
+            <Button type="submit" disabled={savingProfile}>
               {savingProfile ? "Enregistrement…" : "Enregistrer"}
-            </button>
-            <span className="text-xs text-slate-400">
-              Identifiant : {user?.username}
-            </span>
+            </Button>
+            <span className="text-xs text-faint">Identifiant : {user?.username}</span>
           </div>
         </form>
-      </section>
+      </Card>
 
-      {/* Mot de passe */}
-      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <h2 className="mb-4 text-lg font-semibold text-slate-900">Sécurité</h2>
-        <form onSubmit={submitPwd} className="space-y-4">
-          {pwdErr && (
-            <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
-              {pwdErr}
-            </div>
-          )}
-          {pwdStatus?.ok && (
-            <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
-              {pwdStatus.text}
-            </div>
-          )}
+      {/* Sécurité */}
+      <Card>
+        <CardHeader title="Sécurité" description="Change ton mot de passe." />
+        <form onSubmit={submitPwd} className="space-y-4 p-5">
+          {pwdErr && <Alert>{pwdErr}</Alert>}
+          {pwdStatus?.ok && <Alert tone="success">{pwdStatus.text}</Alert>}
           <TextField
             label="Mot de passe actuel"
             name="old_password"
@@ -184,15 +169,11 @@ export default function Profile() {
               required
             />
           </div>
-          <button
-            type="submit"
-            disabled={savingPwd}
-            className="rounded-lg bg-slate-800 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-60"
-          >
+          <Button type="submit" variant="subtle" disabled={savingPwd}>
             {savingPwd ? "Modification…" : "Changer le mot de passe"}
-          </button>
+          </Button>
         </form>
-      </section>
+      </Card>
     </div>
   )
 }

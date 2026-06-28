@@ -1,5 +1,6 @@
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom"
 import { AuthProvider } from "./context/AuthContext"
+import { ThemeProvider } from "./context/ThemeContext"
 import ProtectedRoute from "./components/ProtectedRoute"
 import PublicOnly from "./components/PublicOnly"
 import AppLayout from "./components/AppLayout"
@@ -11,14 +12,14 @@ import Expenses from "./pages/Expenses"
 import Revenus from "./pages/Revenus"
 import Budgets from "./pages/Budgets"
 import Goals from "./pages/Goals"
-import Bank from "./pages/Bank"
 import Insights from "./pages/Insights"
 import Dashboard from "./pages/Dashboard"
 
 export default function App() {
   return (
-    <AuthProvider>
-      <BrowserRouter>
+    <ThemeProvider>
+      <AuthProvider>
+        <BrowserRouter>
         <Routes>
           {/* Routes publiques (redirigent si déjà connecté) */}
           <Route
@@ -52,7 +53,6 @@ export default function App() {
             <Route path="/categories" element={<Categories />} />
             <Route path="/budgets" element={<Budgets />} />
             <Route path="/objectifs" element={<Goals />} />
-            <Route path="/banque" element={<Bank />} />
             <Route path="/conseils" element={<Insights />} />
             <Route path="/profile" element={<Profile />} />
           </Route>
@@ -61,6 +61,7 @@ export default function App() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>
-    </AuthProvider>
+      </AuthProvider>
+    </ThemeProvider>
   )
 }
