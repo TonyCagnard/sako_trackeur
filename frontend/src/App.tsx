@@ -6,6 +6,7 @@ import AppLayout from "./components/AppLayout"
 import Login from "./pages/Login"
 import Register from "./pages/Register"
 import Profile from "./pages/Profile"
+import Categories from "./pages/Categories"
 import Dashboard from "./pages/Dashboard"
 
 export default function App() {
@@ -40,6 +41,7 @@ export default function App() {
             }
           >
             <Route path="/" element={<Dashboard />} />
+            <Route path="/categories" element={<Categories />} />
             <Route path="/profile" element={<Profile />} />
           </Route>
 

@@ -32,6 +32,9 @@ export default function AppLayout() {
               <NavLink to="/" end className={navClass}>
                 Tableau de bord
               </NavLink>
+              <NavLink to="/categories" className={navClass}>
+                Catégories
+              </NavLink>
               <NavLink to="/profile" className={navClass}>
                 Profil
               </NavLink>
