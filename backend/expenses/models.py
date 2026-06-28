@@ -34,3 +34,34 @@ class Category(models.Model):
 
     def __str__(self):
         return f"{self.name} ({self.get_kind_display()})"
+
+
+class Expense(models.Model):
+    """Une dépense (ou un revenu selon la catégorie) de l'utilisateur."""
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="expenses",
+        verbose_name="utilisateur",
+    )
+    category = models.ForeignKey(
+        Category,
+        on_delete=models.PROTECT,  # ne pas supprimer une catégorie utilisée
+        related_name="expenses",
+        verbose_name="catégorie",
+    )
+    amount = models.DecimalField("montant", max_digits=12, decimal_places=2)
+    date = models.DateField("date")
+    description = models.CharField(
+        "description", max_length=200, blank=True, default=""
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "dépense"
+        verbose_name_plural = "dépenses"
+        ordering = ["-date", "-created_at"]
+
+    def __str__(self):
+        return f"{self.amount} € — {self.category.name} ({self.date})"

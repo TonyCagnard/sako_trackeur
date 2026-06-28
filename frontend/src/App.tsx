@@ -7,6 +7,7 @@ import Login from "./pages/Login"
 import Register from "./pages/Register"
 import Profile from "./pages/Profile"
 import Categories from "./pages/Categories"
+import Expenses from "./pages/Expenses"
 import Dashboard from "./pages/Dashboard"
 
 export default function App() {
@@ -41,6 +42,7 @@ export default function App() {
             }
           >
             <Route path="/" element={<Dashboard />} />
+            <Route path="/expenses" element={<Expenses />} />
             <Route path="/categories" element={<Categories />} />
             <Route path="/profile" element={<Profile />} />
           </Route>
