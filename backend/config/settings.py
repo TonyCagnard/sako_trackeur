@@ -58,6 +58,7 @@ MIDDLEWARE = [
     # CorsMiddleware doit rester placé haut, avant CommonMiddleware.
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",  # sert les static même en DEBUG=False
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -124,6 +125,10 @@ USE_TZ = True
 # Fichiers statiques
 # ---------------------------------------------------------------------------
 STATIC_URL = "static/"
+# Dossier où collectstatic regroupe les fichiers (CSS/JS de l'admin, etc.)
+STATIC_ROOT = BASE_DIR / "staticfiles"
+# Sert les fichiers statiques compressés même en production (DEBUG=False)
+STATICFILES_STORAGE = "whitenoise.storage.CompressedStaticFilesStorage"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
