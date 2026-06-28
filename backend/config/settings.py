@@ -53,6 +53,7 @@ INSTALLED_APPS = [
     "expenses",
     "budgets",
     "analytics",
+    "goals",
 ]
 
 MIDDLEWARE = [

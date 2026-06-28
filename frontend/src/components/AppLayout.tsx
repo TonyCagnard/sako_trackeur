@@ -44,6 +44,9 @@ export default function AppLayout() {
               <NavLink to="/budgets" className={navClass}>
                 Budgets
               </NavLink>
+              <NavLink to="/objectifs" className={navClass}>
+                Objectifs
+              </NavLink>
               <NavLink to="/profile" className={navClass}>
                 Profil
               </NavLink>

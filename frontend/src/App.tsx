@@ -10,6 +10,7 @@ import Categories from "./pages/Categories"
 import Expenses from "./pages/Expenses"
 import Revenus from "./pages/Revenus"
 import Budgets from "./pages/Budgets"
+import Goals from "./pages/Goals"
 import Dashboard from "./pages/Dashboard"
 
 export default function App() {
@@ -48,6 +49,7 @@ export default function App() {
             <Route path="/revenus" element={<Revenus />} />
             <Route path="/categories" element={<Categories />} />
             <Route path="/budgets" element={<Budgets />} />
+            <Route path="/objectifs" element={<Goals />} />
             <Route path="/profile" element={<Profile />} />
           </Route>
 
